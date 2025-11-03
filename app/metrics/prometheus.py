@@ -1,6 +1,4 @@
 from prometheus_client import Counter
 
-# Example metric
-requests_total = Counter(
-    "homebot_requests_total", "Total number of processed requests"
-)
+embedding_requests = Counter("homebot_embeddings_total", "Total embedding requests")
+search_requests = Counter("homebot_search_total", "Total search requests")

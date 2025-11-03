@@ -1,3 +1,6 @@
 fastapi
 uvicorn
 prometheus-client
+faiss-cpu
+sentence-transformers
+numpy
