@@ -1,19 +1,21 @@
-from fastapi import FastAPI, Lifespan
+from fastapi import FastAPI
 from prometheus_client import make_asgi_app
 from app.api.routes import router as api_router
 from app.ml.vector_store import VectorStore
 from app.ml.seeder import seed_faiss
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 store = VectorStore()
 
-def lifespan(app: FastAPI) -> Lifespan:
-    async def on_startup():
-        """Seed FAISS index on API startup."""
-        seed_faiss(store)
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # Startup: Seed the vector store
+    seed_faiss(store)
+    yield
+    # Shutdown: (No specific actions needed here)
 
-    async def on_shutdown():
-        """Handle any cleanup if necessary."""
-        pass
+main_app = FastAPI(lifespan=lifespan)
 
 app = FastAPI(title="HomeBot ML Service", version="0.1.0", lifespan=lifespan)
 

@@ -12,33 +12,32 @@ def seed_faiss(store):
         Embed(text="i need to buy milk", domain=Domain.SHOPPING, intent=Intent.ADD_ITEM_TO_LIST),
         Embed(text="i want to buy tomatoes", domain=Domain.SHOPPING, intent=Intent.ADD_ITEM_TO_LIST),
         # Pantry domain
-        {"text": "buy eggs", "domain": "pantry", "intent": "add_item_to_pantry"},
-        {"text": "i have bought eggs", "domain": "pantry", "intent": "add_item_to_pantry"},
-        {"text": "i have bought everything on the shopping list", "domain": "pantry", "intent": "add_item_to_pantry"},
-        {"text": "i ate the oranges", "domain": "pantry", "intent": "remove_item_from_pantry"},
-        {"text": "used all cumin", "domain": "pantry", "intent": "remove_item_from_pantry"},
-        {"text": "list pantry items", "domain": "pantry", "intent": "check_stock"},
+        Embed(text="buy eggs", domain=Domain.PANTRY, intent=Intent.ADD_ITEM_TO_PANTRY),
+        Embed(text="i have bought eggs", domain=Domain.PANTRY, intent=Intent.ADD_ITEM_TO_PANTRY),
+        Embed(text="i have bought everything on the shopping list", domain=Domain.PANTRY, intent=Intent.ADD_ITEM_TO_PANTRY),
+        Embed(text="i ate the oranges", domain=Domain.PANTRY, intent=Intent.REMOVE_ITEM_FROM_PANTRY),
+        Embed(text="used all cumin", domain=Domain.PANTRY, intent=Intent.REMOVE_ITEM_FROM_PANTRY),
+        Embed(text="list pantry items", domain=Domain.PANTRY, intent=Intent.CHECK_STOCK),
         # Expenses domain
-        {"text": "check last month's spending", "domain": "expenses", "intent": "check_expenses"},
-        {"text": "how much did i spend last month?", "domain": "expenses", "intent": "check_expenses"},
-        {"text": "have i spent over budget?", "domain": "expenses", "intent": "check_expenses"},
-        {"text": "pay electricity bill", "domain": "expenses", "intent": "add_expense"},
-        {"text": "send bizum payment", "domain": "expenses", "intent": "add_expense"},
-        {"text": "monthly salary", "domain": "expenses", "intent": "add_income"},
-        {"text": "receive bizum payment", "domain": "expenses", "intent": "add_income"},
+        Embed(text="check last month's spending", domain=Domain.EXPENSES, intent=Intent.CHECK_EXPENSES),
+        Embed(text="how much did i spend last month?", domain=Domain.EXPENSES, intent=Intent.CHECK_EXPENSES),
+        Embed(text="have i spent over budget?", domain=Domain.EXPENSES, intent=Intent.CHECK_EXPENSES),
+        Embed(text="pay electricity bill", domain=Domain.EXPENSES, intent=Intent.ADD_EXPENSE),
+        Embed(text="send bizum payment", domain=Domain.EXPENSES, intent=Intent.ADD_EXPENSE),
+        Embed(text="monthly salary", domain=Domain.EXPENSES, intent=Intent.ADD_INCOME),
+        Embed(text="receive bizum payment", domain=Domain.EXPENSES, intent=Intent.ADD_INCOME),
         # Tasks domain
-        {"text": "need to call mom", "domain": "tasks", "intent": "create_task"},
-        {"text": "schedule dentist appointment", "domain": "tasks", "intent": "create_task"},
-        {"text": "remind me to water the plants", "domain": "tasks", "intent": "create_task"},
-        {"text": "i have called mom", "domain": "tasks", "intent": "complete_task"},
-        {"text": "dentist appointment done", "domain": "tasks", "intent": "complete_task"},
-        {"text": "finish report", "domain": "tasks", "intent": "complete_task"},
+        Embed(text="need to call mom", domain=Domain.TASKS, intent=Intent.CREATE_TASK),
+        Embed(text="schedule dentist appointment", domain=Domain.TASKS, intent=Intent.CREATE_TASK),
+        Embed(text="remind me to water the plants", domain=Domain.TASKS, intent=Intent.CREATE_TASK),
+        Embed(text="i have called mom", domain=Domain.TASKS, intent=Intent.COMPLETE_TASK),
+        Embed(text="dentist appointment done", domain=Domain.TASKS, intent=Intent.COMPLETE_TASK),
+        Embed(text="finish report", domain=Domain.TASKS, intent=Intent.COMPLETE_TASK),
     ]
 
-    # --- 3. Embed texts ---
     texts = [item.text for item in seed_data]
     embeddings = model.encode(texts, convert_to_numpy=True)
+    metadata = [{"domain": item.domain.value, "intent": item.intent.value} for item in seed_data]
 
-    # --- 4. Add to VectorStore ---
-    store.add(texts, embeddings)
+    store.add(texts, embeddings, metadata)
     print("FAISS index seeded with metadata")

@@ -21,7 +21,9 @@ def embed_text(embeds: list[Embed]):
     """
     embedding_requests.inc()
     embeddings = embedder.encode([embed.text for embed in embeds])
-    store.add([embed.text for embed in embeds], embeddings)
+    store.add([embed.text for embed in embeds], 
+              embeddings,
+              [{"domain": embed.domain, "intent": embed.intent} for embed in embeds])
     return {"status": "ok", "count": len(embeds)}
 
 @router.get("/search")
