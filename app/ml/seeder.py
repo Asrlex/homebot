@@ -35,9 +35,13 @@ def seed_faiss(store):
         Embed(text="finish report", domain=Domain.TASKS, intent=Intent.COMPLETE_TASK),
     ]
 
+    print("Seeding FAISS index with metadata...")
     texts = [item.text for item in seed_data]
     embeddings = model.encode(texts, convert_to_numpy=True)
     metadata = [{"domain": item.domain.value, "intent": item.intent.value} for item in seed_data]
 
     store.add(texts, embeddings, metadata)
-    print("FAISS index seeded with metadata")
+    print(f"FAISS index total vectors: {store.index.ntotal}")
+    store.cursor.execute("SELECT COUNT(*) FROM metadata")
+    print(f"Metadata rows: {store.cursor.fetchone()[0]}")
+    print("Seeding completed.")

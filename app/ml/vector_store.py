@@ -2,6 +2,7 @@ import faiss
 import numpy as np
 import uuid
 import sqlite3
+from app.metrics.prometheus import embedded_vectors
 
 class VectorStore:
     _instance = None
@@ -28,7 +29,7 @@ class VectorStore:
 
     def _init_db(self):
         """Initialize the SQLite in-memory database."""
-        self.conn = sqlite3.connect(":memory:")
+        self.conn = sqlite3.connect(":memory:", check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.cursor.execute("""
             CREATE TABLE metadata (
@@ -59,7 +60,30 @@ class VectorStore:
                 (id, text, meta["domain"], meta["intent"])
             )
             self.index.add(np.array([emb], dtype="float32"))
+            embedded_vectors.inc()
         self.conn.commit()
+    
+    
+    def infer_intent_and_domain(self, query_emb: np.ndarray, top_k: int = 3):
+        """Infer intent and domain by semantic proximity."""
+        results = self.search(query_emb, top_k)
+        if not results:
+            return {"intent": "unknown", "domain": "unknown", "results": []}
+
+        weights = [1 / (r["score"] + 1e-6) for r in results]
+        intents = [r["intent"] for r in results]
+        domains = [r["domain"] for r in results]
+
+        def weighted_vote(items, weights):
+            scores = {}
+            for item, w in zip(items, weights):
+                scores[item] = scores.get(item, 0) + w
+            return max(scores, key=lambda x: float(scores[x]))
+
+        intent = weighted_vote(intents, weights)
+        domain = weighted_vote(domains, weights)
+
+        return {"intent": intent, "domain": domain, "results": results}
 
 
     def search(self, query_emb: np.ndarray, top_k: int = 3):
@@ -71,16 +95,16 @@ class VectorStore:
         Returns:
             list[dict]: List of search results with metadata.
         """
-        if query_emb.shape[0] != self.dim:
-            raise ValueError(f"Query embedding dimension mismatch. Expected {self.dim}, got {query_emb.shape[0]}.")
+        if query_emb.shape[1] != self.dim:
+            raise ValueError(f"Query embedding dimension mismatch. Expected {self.dim}, got {query_emb.shape[1]}.")
 
-        D, I = self.index.search(np.array([query_emb], dtype="float32"), top_k)
+        D, I = self.index.search(query_emb.astype("float32"), top_k)
         results = []
         for idx_list, dist_list in zip(I, D):
             for idx, dist in zip(idx_list, dist_list):
+                print(f"Index: {idx}, Distance: {dist}")
                 if idx < self.index.ntotal:
-                    # Retrieve metadata from SQLite
-                    self.cursor.execute("SELECT uuid, text, domain, intent FROM metadata LIMIT 1 OFFSET ?", (idx,))
+                    self.cursor.execute("SELECT uuid, text, domain, intent FROM metadata LIMIT 1 OFFSET ?", (int(idx),))
                     row = self.cursor.fetchone()
                     if row:
                         results.append({

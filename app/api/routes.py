@@ -2,33 +2,25 @@ from fastapi import APIRouter
 from app.metrics.prometheus import search_requests, embedding_requests
 from fastapi import APIRouter, Query
 from app.ml.embed import Embed
-from app.ml.embeddings import Embedder
-from app.ml.vector_store import VectorStore
+from app.ml.service import MLService
 
 router = APIRouter()
-embedder = Embedder()
-store = VectorStore()
+mlservice = MLService()
 
 @router.get("/health")
 def health_check():
     return {"status": "ok"}
 
+@router.get("/status")
+def status():
+    return mlservice.model_status()
+
+
 @router.post("/embed")
 def embed_text(embeds: list[Embed]):
-    """
-    Embed a list of texts and add them to the vector store.
-    Each item must include 'text', 'domain', and 'intent'.
-    """
-    embedding_requests.inc()
-    embeddings = embedder.encode([embed.text for embed in embeds])
-    store.add([embed.text for embed in embeds], 
-              embeddings,
-              [{"domain": embed.domain, "intent": embed.intent} for embed in embeds])
-    return {"status": "ok", "count": len(embeds)}
+    return mlservice.embed_and_store(embeds)
 
 @router.get("/search")
 def search_text(query: str = Query(...), top_k: int = 3):
-    search_requests.inc()
-    query_emb = embedder.encode([query])[0]
-    results = store.search(query_emb, top_k)
-    return {"query": query, "results": results}
+    print(f"Received search request: query='{query}', top_k={top_k}")
+    return mlservice.search(query, top_k)

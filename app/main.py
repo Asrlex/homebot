@@ -5,15 +5,14 @@ from app.ml.vector_store import VectorStore
 from app.ml.seeder import seed_faiss
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+import uvicorn
 
 store = VectorStore()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Startup: Seed the vector store
     seed_faiss(store)
     yield
-    # Shutdown: (No specific actions needed here)
 
 main_app = FastAPI(lifespan=lifespan)
 
@@ -23,3 +22,6 @@ app.include_router(api_router, prefix="/api")
 
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
