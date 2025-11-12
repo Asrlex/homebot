@@ -11,6 +11,7 @@ mlservice = MLService()
 def health_check():
     return {"status": "ok"}
 
+
 @router.get("/status")
 def status():
     return mlservice.model_status()
@@ -19,6 +20,7 @@ def status():
 @router.post("/embed")
 def embed_text(embeds: list[Embed]):
     return mlservice.embed_and_store(embeds)
+
 
 @router.get("/search")
 def search_text(query: str = Query(...), top_k: int = 3):

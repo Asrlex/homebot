@@ -10,6 +10,7 @@ class VectorStore:
     metadata: dict
     dim: int
 
+
     def __new__(cls, dim: int = 384):
         """
         Create or return the singleton instance of VectorStore.
@@ -98,7 +99,7 @@ class VectorStore:
         if query_emb.shape[1] != self.dim:
             raise ValueError(f"Query embedding dimension mismatch. Expected {self.dim}, got {query_emb.shape[1]}.")
 
-        D, I = self.index.search(query_emb.astype("float32"), top_k)
+        D, I = self.index.search(query_emb.astype("float32"), top_k) # type: ignore
         results = []
         for idx_list, dist_list in zip(I, D):
             for idx, dist in zip(idx_list, dist_list):

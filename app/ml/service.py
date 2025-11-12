@@ -11,7 +11,8 @@ class MLService:
             MLService._instance = self
             self.embedder = Embedder()
             self.vector_store = VectorStore()
-    
+
+
     def model_status(self):
         """Return the status of the model and vector store."""
         self.vector_store.cursor.execute("SELECT COUNT(*) FROM metadata")
@@ -31,6 +32,7 @@ class MLService:
                   embeddings,
                   [{"domain": embed.domain, "intent": embed.intent} for embed in embeds])
         return {"status": "ok", "count": len(embeds), "embedded_texts": texts}
+
 
     def search(self, query: str, top_k: int = 3):
         """
